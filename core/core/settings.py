@@ -1,7 +1,7 @@
 """
 Django settings for core project.
-Generated for Docker/PostgreSQL/Nginx Environment.
 Architect: IRONKAGE
+Environment: Kubernetes (Helm + Ingress) / LocalStack
 """
 
 import os
@@ -10,20 +10,17 @@ from pathlib import Path
 # ==========================================
 # 1. Визначаємо базову директорію проекту
 # ==========================================
-# Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # ==========================================
 # 2. Безпека: Секретний ключ та Debug
 # ==========================================
-# Краще тримати в .env, але додамо fallback для розробки
 SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-debug-key-12345')
-
-# Режим відладки (Читаємо з .env, за замовчуванням увімкнено для тестів)
 DEBUG = int(os.environ.get('DEBUG', 1))
 
-# Дозволені хости (Критично важливо для Nginx та Gunicorn всередині Docker)
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', 'localhost,127.0.0.1,django').split(',')
+# У Kubernetes Ingress сам керує доменами, тому для Django зазвичай дозволяють все (*),
+# або передають конкретний домен через ConfigMap
+ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
 # ==========================================
 # 3. Додатки та Middleware
@@ -34,12 +31,13 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
+    'whitenoise.runserver_nostatic',
     'django.contrib.staticfiles',
-    # Тут можна додати свої додатки
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -71,7 +69,6 @@ WSGI_APPLICATION = 'core.wsgi.application'
 # ==========================================
 # 4. Конфігурація Бази Даних (PostgreSQL)
 # ==========================================
-# Дані автоматично підтягуються з вашого файлу .env
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -93,18 +90,18 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
 
-# Налаштування української мови та часового поясу
 LANGUAGE_CODE = 'uk-ua'
 TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
 # ==========================================
-# 6. СТАТИЧНІ ФАЙЛИ (Налаштування для Nginx)
+# 6. СТАТИЧНІ ФАЙЛИ (WhiteNoise для Kubernetes)
 # ==========================================
 STATIC_URL = 'static/'
-
-# Папка, куди Django збере всі файли для Nginx під час команди collectstatic
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Цей параметр змушує Django стискати статику (gzip/brotli) та кешувати її
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'

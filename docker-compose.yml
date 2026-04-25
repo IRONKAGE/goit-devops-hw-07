@@ -1,45 +1,39 @@
 services:
+  localstack:
+    image: localstack/localstack-pro:latest
+    container_name: localstack_main
+    ports:
+      - "127.0.0.1:4566:4566"
+      - "127.0.0.1:4510-4559:4510-4559"
+    environment:
+      - LOCALSTACK_AUTH_TOKEN=${LOCALSTACK_AUTH_TOKEN}
+      - DEBUG=1
+    volumes:
+      - "./volume:/var/lib/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+
   db:
     image: postgres:15-alpine
     container_name: postgres_db
-    restart: always
-    env_file:
-      - .env
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
       interval: 5s
-      timeout: 5s
-      retries: 5
 
   django:
     build: .
     container_name: django_web
-    restart: always
-    env_file:
-      - .env
+    env_file: .env
     volumes:
       - ./core:/app
-      - static_volume:/app/staticfiles
-    expose:
-      - "8000"
     depends_on:
       db:
         condition: service_healthy
 
-  nginx:
-    image: nginx:alpine
-    container_name: nginx_proxy
-    restart: always
-    ports:
-      - "80:80"
-    volumes:
-      - ./nginx/nginx.conf:/etc/nginx/conf.d/default.conf:ro
-      - static_volume:/app/staticfiles  # Nginx має доступ до статики Django
-    depends_on:
-      - django
-
 volumes:
   postgres_data:
-  static_volume:
