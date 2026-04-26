@@ -59,6 +59,12 @@ setup_modern.log
 *.tfstate
 *.tfstate.*
 
+# Файли-перехоплювачі LocalStack Pro (КРИТИЧНО НЕ КОМІТИТИ!)
+localstack_providers_override.tf
+
+# LocalStack Pro persistent data (Бази даних, стейт хмари локально)
+volume/
+
 # Краш-логи
 crash.log
 crash.*.log

@@ -1,34 +1,57 @@
 @echo off
-:: Обгортка для Windows (God Mode: LocalStack S3 + K8s + Auto-Build)
+setlocal EnableDelayedExpansion
+:: Обгортка для Windows (God Mode: LocalStack Pro + Real AWS + K8s)
 
 echo [*] Перевірка/Збірка образу Toolchain...
 docker build -q -t ironkage-iac-toolchain:latest -f Dockerfile.iac .
 
 echo [+] Запуск команди: %*
 
-:: 1. Локальне середовище (LocalStack)
-:: (Команду 'aws' сюди більше не пускаємо, бо вона має логінитись у справжній ECR)
-if "%1"=="tflocal" (
+:: 1. Локальне середовище (LocalStack Pro)
+if "%~1"=="tflocal" (
+    :: Жорстко фіксуємо ім'я контейнера
+    SET "LS_CONTAINER=localstack_main"
+
+    :: Отримуємо ПЕРШУ мережу (обходимо баг з додатковими мережами від k3d)
+    SET "LS_NETWORK="
+    FOR /F "tokens=*" %%i IN ('docker inspect !LS_CONTAINER! -f "{{range $k, $v := .NetworkSettings.Networks}}{{println $k}}{{end}}" 2^>nul') DO (
+        IF "!LS_NETWORK!"=="" SET LS_NETWORK=%%i
+    )
+
+    :: Отримуємо ПЕРШУ чисту IP-адресу
+    SET "LS_IP="
+    FOR /F "tokens=*" %%i IN ('docker inspect !LS_CONTAINER! -f "{{range .NetworkSettings.Networks}}{{println .IPAddress}}{{end}}" 2^>nul') DO (
+        IF "!LS_IP!"=="" SET LS_IP=%%i
+    )
+
+    IF "!LS_IP!"=="" (
+        echo [-] Помилка: Не вдалося отримати IP-адресу LocalStack Pro. Перевірте, чи запущений контейнер: docker ps
+        exit /b 1
+    )
+
+    echo [*] LocalStack Pro: Мережа = !LS_NETWORK! ^| IP = !LS_IP!
+
+    :: Запускаємо Terraform, використовуючи ТІЛЬКИ IP-адресу
     docker run --rm -it ^
         -v "%cd%":/workspace ^
-        --add-host s3.localhost.localstack.cloud:host-gateway ^
-        --add-host localhost.localstack.cloud:host-gateway ^
-        -e LOCALSTACK_HOST=host.docker.internal ^
-        -e LOCALSTACK_HOSTNAME=host.docker.internal ^
-        -e AWS_ENDPOINT_URL=http://host.docker.internal:4566 ^
+        --network "!LS_NETWORK!" ^
+        -e PYTHONUNBUFFERED=1 ^
+        -e LOCALSTACK_HOST="!LS_IP!" ^
+        -e AWS_ENDPOINT_URL="http://!LS_IP!:4566" ^
         -e AWS_ACCESS_KEY_ID=test ^
         -e AWS_SECRET_ACCESS_KEY=test ^
         -e AWS_SESSION_TOKEN=dummy ^
         -e AWS_DEFAULT_REGION=eu-central-1 ^
-        -e LOCALSTACK_AUTH_TOKEN=%LOCALSTACK_AUTH_TOKEN% ^
+        -e LOCALSTACK_AUTH_TOKEN="%LOCALSTACK_AUTH_TOKEN%" ^
         ironkage-iac-toolchain:latest %*
 ) else (
 :: 2. Бойове середовище (Terragrunt, Helm, AWS CLI)
     if not exist "%USERPROFILE%\.kube" mkdir "%USERPROFILE%\.kube"
+
     docker run --rm -it ^
         -v "%cd%":/workspace ^
         -v "%USERPROFILE%\.aws":/root/.aws ^
         -v "%USERPROFILE%\.kube":/root/.kube ^
-        -e LOCALSTACK_AUTH_TOKEN=%LOCALSTACK_AUTH_TOKEN% ^
+        -e PYTHONUNBUFFERED=1 ^
         ironkage-iac-toolchain:latest %*
 )

@@ -128,10 +128,10 @@ ingress:
 
 Після успішного відпрацювання скрипта:
 
-1. Вебзастосунок Django буде доступний за адресою: [http://localhost](http://localhost)
+1. Вебзастосунок Django буде доступний за адресою: [http://localhost](http://localhost) (або за згенерованою адресою Load Balancer'а).
 2. База даних PostgreSQL автоматично підніметься на порту `5432` (міграції будуть застосовані автоматично завдяки `entrypoint.sh`).
 
-Щоб зупинити проект, виконайте в терміналі:
+Щоб зупинити локальні контейнери, виконайте в терміналі:
 
 ```sh
 docker compose down
@@ -166,7 +166,7 @@ docker compose down
 2. Відкрийте `.env` і заповніть ваші реальні дані:
    - Ключі AWS (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`).
    - Паролі для бази даних та Django.
-   - Токен LocalStack Pro (якщо тестуєте локально).
+   - Токен **LocalStack Pro** (`LOCALSTACK_AUTH_TOKEN`) — **обов'язковий** для локального тестування, оскільки безкоштовна версія не підтримує розгортання Kubernetes (EKS).
 
 > ⚠️ **Важливо:** Файл `.env` додано до `.gitignore`. Він ніколи не потрапить у репозиторій. Файли `.tfvars` містять лише безпечні налаштування інфраструктури (регіони, типи інстансів) і безпечно зберігаються в Git.
 
@@ -174,12 +174,14 @@ docker compose down
 
 ## 🚀 Як користуватися (Автопілот)
 
-### Опція А: Тестування локально (Через LocalStack)
+### Опція А: Тестування локально (Через LocalStack Pro)
 
-*Ідеально для перевірки Terraform коду та збірки Docker-образів. Потребує LocalStack Pro для симуляції EKS.*
+*Ідеально для перевірки Terraform коду, модулів EKS та збірки Docker-образів.*
+
+> 🛑 **УВАГА:** Проект налаштований виключно на використання **LocalStack Pro**. Безкоштовна версія (Community) не вміє емулювати EKS та створювати ноди Kubernetes. Без дійсного ключа `LOCALSTACK_AUTH_TOKEN` локальний деплой завершиться помилкою.
 
 ```bash
-# Розгортання середовища dev локально
+# Розгортання середовища dev локально (вимагає Pro-ліцензії)
 make deploy-local dev
 ```
 
@@ -216,7 +218,7 @@ make deploy-aws prod my-super-django-app.com
 make destroy-aws prod
 ```
 
-**Для LocalStack (локально):**
+**Для LocalStack Pro (Локально):**
 
 ```bash
 make destroy-local dev
@@ -228,7 +230,7 @@ make destroy-local dev
 # Видалити кеш Terragrunt/Terraform та локальні стейти
 make clean
 
-# Повністю видалити всі Docker-образи проекту та зупинити LocalStack
+# Повністю видалити всі Docker-образи проекту та зупинити LocalStack Pro
 make deep-clean
 ```
 
@@ -238,16 +240,16 @@ make deep-clean
 
 ```text
 goit-devops-hw-07/
-├── .env                 <-- (НЕ В GIT) Ваші секрети, ключі AWS, паролі БД
+├── .env                 <-- Ваші секрети, ключі AWS, ліцензія LocalStack Pro
 ├── .env.example         <-- Шаблон для розробників
 ├── Dockerfile           <-- Production-ready образ для Django (Python 3.11-slim)
 ├── Dockerfile.iac       <-- Ізольований Toolchain (Terraform, Terragrunt, Helm, AWS CLI)
 ├── Makefile             <-- Пульт управління (Автопілот)
 ├── terragrunt.hcl       <-- Коренева конфігурація (Auto-init S3 backend & DynamoDB)
-├── dev.tfvars           <-- Налаштування архітектури для тестування
+├── dev.tfvars           <-- Налаштування архітектури для тестування (Економний режим)
 ├── prod.tfvars          <-- Налаштування архітектури (Multi-AZ, m5.large, Logging)
-├── tf.cmd / tf.sh       <-- Розумні обгортки (LocalStack S3 Hack + K8s Config mapping)
-├── docker-compose.yml   <-- Локальний емулятор LocalStack та PostgreSQL
+├── tf.cmd / tf.sh       <-- Розумні обгортки (LocalStack Pro S3 Hack + IP Resolution for K3d)
+├── docker-compose.yml   <-- Локальний емулятор LocalStack Pro та PostgreSQL
 │
 ├── charts/              <-- Kubernetes Helm Charts
 │   └── django-app/
@@ -269,12 +271,12 @@ goit-devops-hw-07/
 
 🟢 **Середовище `dev`**
 
-- **Архітектура:** Економна (t3.medium інстанси).
+- **Архітектура:** Економна (t3.medium інстанси, 1 нода).
 - **Мережа:** NAT Gateway вимкнений (для економії).
-- **Призначення:** Швидка перевірка застосунку розробниками.
+- **Призначення:** Швидка перевірка застосунку розробниками або запуск у LocalStack Pro.
 
 🔴 **Середовище `prod` (Бойовий режим)**
 
-- **Архітектура:** Високонавантажена (`m5.large`, Multi-AZ для відмовостійкості).
-- **Мережа:** Увімкнено NAT Gateway для безпечного доступу вузлів до інтернету.
+- **Архітектура:** Високонавантажена (`m5.large`, Multi-AZ, від 3 до 10 нод).
+- **Мережа:** Увімкнено NAT Gateway для безпечного доступу приватних вузлів до інтернету.
 - **Безпека:** Активне сканування Docker-образів в ECR та аудит-логи в EKS кластері.

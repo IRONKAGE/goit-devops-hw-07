@@ -67,11 +67,16 @@ resource "aws_iam_role_policy_attachment" "eks_container_registry_policy" {
 # ==========================================
 # 4. Виклик модуля EKS
 # ==========================================
+# Виклик модуля EKS (Feature Toggle)
 module "eks" {
-  source                    = "./modules/eks"
+  source = "./modules/eks"
+
+  # Якщо enable_eks = false, Terraform просто проігнорує цей модуль
+  count  = var.enable_eks ? 1 : 0
+
   cluster_name              = var.cluster_name
   cluster_version           = var.cluster_version
-  subnet_ids                = module.vpc.private_subnet_ids # Вузли ховаємо в приватній мережі
+  subnet_ids                = module.vpc.private_subnet_ids
 
   cluster_role_arn          = aws_iam_role.eks_cluster_role.arn
   node_role_arn             = aws_iam_role.eks_node_role.arn

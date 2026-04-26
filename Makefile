@@ -63,11 +63,11 @@ help:
 	@echo " Доступні команди (Terragrunt + Helm):"
 	@echo "============================================================="
 	@echo "  make help                        - Показати це меню"
-	@echo "  make up                          - Запустити LocalStack"
-	@echo "  make down                        - Зупинити LocalStack"
+	@echo "  make up                          - Запустити LocalStack Pro"
+	@echo "  make down                        - Зупинити LocalStack Pro"
 	@echo "  make test-local [env]            - План локального розгортання"
 	@echo "  make test-aws [env]              - План бойового розгортання (AWS)"
-	@echo "  make deploy-local [env]          - Деплой локально (LocalStack)"
+	@echo "  make deploy-local [env]          - Деплой локально (LocalStack Pro)"
 	@echo "  make deploy-aws [env]            - Бойовий деплой (ClusterIP)"
 	@echo "  make deploy-aws [env] [domain]   - Бойовий деплой (Ingress + TLS)"
 	@echo "  make destroy-local [env]         - Знищити локальні ресурси"
@@ -85,14 +85,14 @@ docker-ensure:
 	@echo "[+] Docker готовий!"
 
 up: docker-ensure
-	@echo "[*] Запуск LocalStack..."
+	@echo "[*] Запуск LocalStack Pro..."
 	docker compose up -d localstack
-	@echo "[*] Перевірка готовності API LocalStack..."
+	@echo "[*] Перевірка готовності API LocalStack Pro..."
 	@curl -s http://localhost:4566/_localstack/health >/dev/null || (echo "[*] Очікування старту сервісів (5 сек)..." && sleep 5)
-	@echo "[+] LocalStack готовий!"
+	@echo "[+] LocalStack Pro готовий!"
 
 down:
-	@echo "[*] Зупинка LocalStack..."
+	@echo "[*] Зупинка LocalStack Pro..."
 	docker compose down
 
 # ==============================================================================
@@ -102,11 +102,11 @@ down:
 test-local: up
 	@echo "[*] План локальної інфраструктури ($(ENV))..."
 	$(TG_WRAPPER) tflocal init
-	$(TG_WRAPPER) tflocal plan -var-file=$(ENV_FILE)
+	$(TG_WRAPPER) tflocal plan -var-file $(ENV_FILE)
 
 test-aws: docker-ensure
 	@echo "[*] План бойової інфраструктури AWS ($(ENV))..."
-	$(TG_WRAPPER) terragrunt run-all plan -var-file=$(ENV_FILE)
+	$(TG_WRAPPER) terragrunt run-all plan -var-file $(ENV_FILE)
 
 # ==============================================================================
 # ДЕПЛОЙ (Створення ресурсів)
@@ -115,7 +115,7 @@ test-aws: docker-ensure
 deploy-local: up
 	@echo "[*] Запуск локального деплою для середовища: $(ENV)..."
 	$(TG_WRAPPER) tflocal init
-	$(TG_WRAPPER) tflocal apply -var-file=$(ENV_FILE) -auto-approve
+	$(TG_WRAPPER) tflocal apply -var-file $(ENV_FILE) -auto-approve
 	@echo "[+] Локальний деплой успішно завершено!"
 
 deploy-aws: docker-ensure
@@ -159,7 +159,7 @@ deploy-app:
 
 destroy-local: up
 	@echo "[*] Видалення локальних ресурсів для середовища: $(ENV)..."
-	$(TG_WRAPPER) tflocal destroy -var-file=$(ENV_FILE) -auto-approve
+	$(TG_WRAPPER) tflocal destroy -var-file $(ENV_FILE) -auto-approve
 	@echo "[+] Локальні ресурси видалено!"
 
 destroy-aws: docker-ensure

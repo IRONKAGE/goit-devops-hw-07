@@ -17,3 +17,9 @@ variable "node_min_size" { type = number }
 variable "node_max_size" { type = number }
 variable "node_desired_size" { type = number }
 variable "enabled_cluster_log_types" { type = list(string) }
+
+variable "enable_eks" {
+  description = "Вмикає або вимикає розгортання модуля EKS (для обходу LocalStack Pro)"
+  type        = bool
+  default     = true
+}
