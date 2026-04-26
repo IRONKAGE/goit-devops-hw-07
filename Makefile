@@ -68,7 +68,7 @@ help:
 	@echo "  make test-local [env]            - План локального розгортання"
 	@echo "  make test-aws [env]              - План бойового розгортання (AWS)"
 	@echo "  make deploy-local [env]          - Деплой локально (LocalStack)"
-	@echo "  make deploy-aws [env]            - Бойовий деплой (LoadBalancer)"
+	@echo "  make deploy-aws [env]            - Бойовий деплой (ClusterIP)"
 	@echo "  make deploy-aws [env] [domain]   - Бойовий деплой (Ingress + TLS)"
 	@echo "  make destroy-local [env]         - Знищити локальні ресурси"
 	@echo "  make destroy-aws [env]           - Знищити ресурси AWS"

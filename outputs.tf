@@ -1,0 +1,8 @@
+output "vpc_id" {
+  value = module.vpc.vpc_id
+}
+
+output "ecr_repository_url" {
+  description = "URL ECR репозиторію для Makefile"
+  value       = module.ecr.repository_url
+}
