@@ -27,6 +27,7 @@
 3. **Створіть `helm`. У Helm-чарті має бути реалізовано:**
    - **Deployment** — з образом Django з ECR та підключенням `ConfigMap` (через `envFrom`)
    - **Service** — типу `LoadBalancer` для зовнішнього доступу
+        > Оскільки було виконано бонусне завдання з Ingress, тип Service (service.type) було змінено з LoadBalancer на ClusterIP згідно з best practices, щоб уникнути створення дублюючих балансувальників у хмарі AWS
    - **HPA (Horizontal Pod Autoscaler)** — масштабування подів від 2 до 6 при навантаженні > 70%
    - **ConfigMap** — для змінних середовища (перенесених із теми 4)
    - **values.yaml** — з параметрами образу, сервісу, конфігурації та autoscaler
