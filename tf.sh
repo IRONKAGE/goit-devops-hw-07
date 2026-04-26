@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 # Обгортка для Mac/Linux (God Mode: LocalStack + Real AWS + Kubernetes)
 
 echo "[+] Запуск команди: $@"
