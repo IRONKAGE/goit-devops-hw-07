@@ -26,7 +26,7 @@ scan_on_push  = true
 # ОРКЕСТРАЦІЯ - EKS (Production Grade)
 # ==========================================
 cluster_name    = "ironkage-k8s-prod"
-cluster_version = "1.30"
+cluster_version = "1.31"
 
 # Типи інстансів для робочих вузлів (Worker Nodes)
 # t3.medium — мінімум для продакшену K8s

@@ -34,5 +34,10 @@ resource "aws_eks_node_group" "nodes" {
   instance_types = var.node_instance_types
 
   # Рекомендується використовувати ON_DEMAND для стабільності бази/ML
-  capacity_type = "ON_DEMAND"
+  capacity_type  = "ON_DEMAND"
+
+  # Захищаємо desired_size від перезапису при наступних terraform apply
+  lifecycle {
+    ignore_changes = [scaling_config[0].desired_size]
+  }
 }

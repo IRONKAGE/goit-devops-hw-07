@@ -23,7 +23,7 @@ scan_on_push  = false         # <-- Економимо час при пуші л
 # ОРКЕСТРАЦІЯ - EKS
 # ==========================================
 cluster_name    = "ironkage-k8s-dev"
-cluster_version = "1.30"
+cluster_version = "1.31"
 
 # Типи та кількість інстансів (Економний режим для розробки)
 node_instance_types = ["t3.medium"]

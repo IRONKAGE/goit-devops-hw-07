@@ -39,7 +39,7 @@ ifneq ($(filter deploy-local deploy-aws destroy-local destroy-aws test-local tes
 endif
 
 # 4. Інтелектуальна логіка Ingress
-HELM_SET_FLAGS := --set env.SECRET_KEY=$(DJANGO_SECRET_KEY) --set env.POSTGRES_PASSWORD=$(POSTGRES_PASSWORD)
+HELM_SET_FLAGS := --set secrets.SECRET_KEY=$(DJANGO_SECRET_KEY) --set secrets.POSTGRES_PASSWORD=$(POSTGRES_PASSWORD)
 
 ifneq ($(DOMAIN),)
 	HELM_SET_FLAGS += --set ingress.enabled=true \
